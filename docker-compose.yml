@@ -1,0 +1,37 @@
+version: '3.7'
+services:
+
+  db:
+    image: postgres:11
+    ports:
+      - "5432:5432"
+    volumes:
+      - database:/var/lib/postgresql/data/pgdata
+    environment:
+      POSTGRES_DB: vibing
+      POSTGRES_USER: vibing
+      POSTGRES_PASSWORD: ghbdtn
+      PGDATA: /var/lib/postgresql/data/pgdata
+    restart: always
+
+  vibing:
+    image: 'vibing'
+    build: .
+    volumes:
+      - data-volume:/vibing
+
+  realtime:
+    image: 'vibing'
+    command: 'python3 /vibing/app/main.py'
+    volumes:
+      - data-volume:/vibing
+    depends_on:
+      - db
+    ports:
+      - "8000:8000"
+    restart: always
+
+
+volumes:
+  data-volume:
+  database:

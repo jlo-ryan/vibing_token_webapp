@@ -1,0 +1,5 @@
+psycopg2==2.8.2
+aiopg==0.16.0
+peewee==3.9.4
+peewee-async==0.6.0a0
+aiohttp==3.5.4
