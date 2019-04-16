@@ -12,6 +12,8 @@ class Hashtag(BaseModel):
 
 
 class HashtagStatistic(BaseModel):
+    hashtag = peewee.ForeignKeyField(Hashtag)
+
     total_posts = peewee.IntegerField(default=0)
     total_distance = peewee.IntegerField(default=0)
 
