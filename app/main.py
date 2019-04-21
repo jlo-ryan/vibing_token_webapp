@@ -3,6 +3,8 @@ import logging
 
 from aiohttp import web
 
+from scraper import Scraper
+
 
 async def get_app():
     app = web.Application(client_max_size=0)
@@ -15,6 +17,8 @@ if __name__ == '__main__':
                         level=logging.INFO)
 
     loop = asyncio.get_event_loop()
-    app = loop.run_until_complete(get_app())
-
-    web.run_app(app, port=8000)
+    scraper = Scraper.start(loop=loop)
+    print(scraper)
+    # app = loop.run_until_complete(get_app())
+    #
+    # web.run_app(app, port=8000)
