@@ -1,5 +1,7 @@
 import asyncio
+import json
 import logging
+import time
 
 from aiohttp import web
 
@@ -17,10 +19,18 @@ if __name__ == '__main__':
                         level=logging.INFO)
 
     loop = asyncio.get_event_loop()
-    scraper = Scraper(('cat', 'dog', 'car', 'man', 'food', 'meat'), concurrency=50)
+
+    tags = open('words.txt', 'r').read().split('\n')
+
+    scraper = Scraper(tags, concurrency=200)
+    t1 = time.time()
     loop.run_until_complete(scraper.parse_all_tags())
-    print(scraper)
-    # scraper = Scraper.start(loop=loop)
+    print(len(scraper.posts))
+
+    print("TIME WORK", time.time() - t1)
+
+    with open('all.txt', 'w') as f:
+        f.write(json.dumps([p._asdict() for p in scraper.posts], default=str))
 
     # app = loop.run_until_complete(get_app())
     #
