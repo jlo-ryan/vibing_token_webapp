@@ -7,14 +7,14 @@ from collections import namedtuple
 from datetime import datetime
 
 import aiohttp
-from aiohttp import ClientPayloadError, ClientConnectorError, ClientOSError
+from aiohttp import ClientPayloadError, ClientConnectorError, ClientOSError, ServerDisconnectedError
 from pyquery import PyQuery as pq
 
 
 class Scraper:
     posts = []
     concurrency = 10
-    workers = 10
+    workers = 20
     headers = {
         'user-agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36'}
     proxy = None
@@ -61,6 +61,8 @@ class Scraper:
             logging.info("[ClientOSError] retry fetch: %s, count: %d", url, count_retry)
         except asyncio.TimeoutError:
             logging.info("[TimeoutError] retry fetch: %s, count: %d", url, count_retry)
+        except ServerDisconnectedError:
+            logging.info("[ServerDisconnectedError] retry fetch: %s, count: %d", url, count_retry)
 
         return await self.fetch(url, count_retry + 1)
 
@@ -84,9 +86,6 @@ class Scraper:
     async def fill_queue(self):
         for u, t in self.start_urls:
             self.queue.put_nowait((u, t))
-
-        for i in range(self.concurrency):
-            self.queue.put_nowait(None)
 
     async def parse_all_tags(self):
         asyncio.ensure_future(self.fill_queue())

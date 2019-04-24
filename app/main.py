@@ -22,7 +22,7 @@ if __name__ == '__main__':
 
     tags = open('words.txt', 'r').read().split('\n')
 
-    scraper = Scraper(tags, concurrency=200)
+    scraper = Scraper(tags, concurrency=100, proxy="http://172.19.0.1:8080")
     t1 = time.time()
     loop.run_until_complete(scraper.parse_all_tags())
     print(len(scraper.posts))
