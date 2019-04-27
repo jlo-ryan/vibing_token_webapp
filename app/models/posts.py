@@ -6,7 +6,7 @@ from models.hashtags import Hashtag
 
 
 class Post(BaseModel):
-    hashtag = peewee.ForeignKeyField(Hashtag)
+    hashtag = peewee.ForeignKeyField(Hashtag, backref='posts')
 
     published_at = peewee.DateTimeField()
     url = peewee.TextField()
@@ -15,3 +15,4 @@ class Post(BaseModel):
 
     class Meta:
         table_name = 'posts'
+        order_by = ['published_at']

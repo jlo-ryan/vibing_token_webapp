@@ -20,8 +20,8 @@ class Scraper:
     proxy = None
     queue = asyncio.Queue()
 
-    def __init__(self, tags: [list, tuple], concurrency=None, headers=None, proxy=None):
-        self.start_urls = (('https://www.instagram.com/explore/tags/{}/'.format(i), i) for i in tags)
+    def __init__(self, tags, concurrency=None, headers=None, proxy=None):
+        self.start_urls = (('https://www.instagram.com/explore/tags/{}/'.format(i.name), i.name) for i in tags)
 
         if concurrency:
             self.concurrency = concurrency
@@ -51,7 +51,7 @@ class Scraper:
                             return await resp.text()
 
             logging.info("[%d status] retry fetch: %s, count: %d", resp.status, url, count_retry)
-            return await self.fetch(url, count_retry + 1)
+            return await self.fetch(url, tag, count_retry=count_retry + 1)
 
         except ClientPayloadError:
             logging.info("[ClientPayloadError] retry fetch: %s, count: %d", url, count_retry)
@@ -64,7 +64,7 @@ class Scraper:
         except ServerDisconnectedError:
             logging.info("[ServerDisconnectedError] retry fetch: %s, count: %d", url, count_retry)
 
-        return await self.fetch(url, count_retry + 1)
+        return await self.fetch(url, tag, count_retry=count_retry + 1)
 
     def get_shared_data(self, scripts):
         for script in scripts:
@@ -83,12 +83,12 @@ class Scraper:
         dom = pq(html)
         return dom('script')
 
-    async def fill_queue(self):
+    def fill_queue(self):
         for u, t in self.start_urls:
             self.queue.put_nowait((u, t))
 
     async def parse_all_tags(self):
-        asyncio.ensure_future(self.fill_queue())
+        self.fill_queue()
 
         workers = []
 

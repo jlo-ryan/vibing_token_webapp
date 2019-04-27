@@ -4,6 +4,8 @@ import peewee
 import peewee_async
 from playhouse import postgres_ext
 from postgis import Point
+import postgis
+
 
 peewee.OP.update(
     BBOX2D='&&',
@@ -32,6 +34,10 @@ def create_db():
     return peewee_async.Manager(database)
 
 
+async def close_db():
+    await database.close()
+
+
 class BaseModel(peewee.Model):
     class Meta:
         database = database
@@ -52,7 +58,7 @@ class PointField(peewee.Field, postgres_ext.IndexedFieldMixin):
         return self.coerce(value)
 
     def python_value(self, value):
-        return self.coerce(value)
+        return self.coerce(postgis.Point.from_ewkb(value))
 
     def coerce(self, value):
         if not value:
@@ -70,15 +76,3 @@ class PointField(peewee.Field, postgres_ext.IndexedFieldMixin):
                 if not value[0].isdigit() or not value[1].isdigit():
                     raise ValueError
         return Point(value[0], value[1], srid=self.srid)
-
-    def contained(self, geom):
-        return peewee.Expression(self, peewee.OP.BBOXCONTAINED, geom)
-
-    def contains(self, geom):
-        return peewee.Expression(self, peewee.OP.BBOXCONTAINS, geom)
-
-    def in_bbox(self, south, north, east, west):
-        return self.contained(
-            peewee.fn.ST_MakeBox2D(Point(west, south, srid=self.srid),
-                                   Point(east, north, srid=self.srid)),
-        )
