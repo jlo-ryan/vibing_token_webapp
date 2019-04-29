@@ -4,55 +4,61 @@ from models.hashtags import Hashtag
 from models.posts import Post
 
 
-async def update_statistics(db, posts):
-    posts.sort(key=lambda x: x.published_at)
+async def update_statistics(db, queue):
+    while True:
+        post = await queue.get()
 
-    for post in posts:
-        hashtag = await db.get(Hashtag, name=post.tag)
+        if post is None:
+            return
 
-        posts_db = list(await db.execute(
-            Post.select(Post, Hashtag)
-                .join(Hashtag)
-                .where(Hashtag.name == post.tag)
-                .order_by(Post.published_at)
-        ))
+        await start_proccess(db, post)
 
-        dates = [i.published_at for i in posts_db]
 
-        newest = True
+async def start_proccess(db, post):
+    hashtag = await db.get(Hashtag, name=post.tag)
 
-        if dates:
-            newest = post.published_at > max(dates)
+    posts_db = list(await db.execute(
+        Post.select(Post, Hashtag)
+            .join(Hashtag)
+            .where(Hashtag.name == post.tag)
+            .order_by(Post.published_at)
+    ))
 
-        if newest:
-            point = Point(post.location.lat, post.location.lng, srid=4326)
-            data = {
-                'hashtag_id': hashtag.id,
-                'published_at': post.published_at,
-                'url': post.url,
-                'location': post.location.name,
-                'point': point
-            }
-            await db.create(Post, **data)
+    dates = [i.published_at for i in posts_db]
 
-            if not posts_db:
-                continue
+    newest = True
 
-            hashtag.total_posts += 1
+    if dates:
+        newest = post.published_at > max(dates)
 
-            total_distance = hashtag.total_distance
+    if newest:
+        point = Point(post.location.lat, post.location.lng, srid=4326)
+        data = {
+            'hashtag_id': hashtag.id,
+            'published_at': post.published_at,
+            'url': post.url,
+            'location': post.location.name,
+            'point': point
+        }
+        await db.get_or_create(Post, **data)
 
-            last_point_in_db = posts_db[0].point
+        if not posts_db:
+            return
 
-            distance_between_last_points = await db.execute(Post.raw("""
-            SELECT ST_Distance(
-                    'SRID=4326;POINT(%s %s)'::geography,
-                    'SRID=4326;POINT(%s %s)'::geography
-            )/1000 as distance
-            """, *point.coords, *last_point_in_db.coords))
+        hashtag.total_posts += 1
 
-            distance_between_last_points = distance_between_last_points[0].distance
-            hashtag.total_distance = total_distance + distance_between_last_points
+        total_distance = hashtag.total_distance
 
-            await db.update(hashtag)
+        last_point_in_db = posts_db[0].point
 
+        distance_between_last_points = await db.execute(Post.raw("""
+        SELECT ST_Distance(
+                'SRID=4326;POINT(%s %s)'::geography,
+                'SRID=4326;POINT(%s %s)'::geography
+        )/1000 as distance
+        """, *point.coords, *last_point_in_db.coords))
+
+        distance_between_last_points = distance_between_last_points[0].distance
+        hashtag.total_distance = total_distance + distance_between_last_points
+
+        await db.update(hashtag)

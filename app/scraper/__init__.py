@@ -1,7 +1,6 @@
 import asyncio
 import json
 import logging
-import random
 from asyncio import QueueEmpty
 from collections import namedtuple
 from datetime import datetime
@@ -12,13 +11,13 @@ from pyquery import PyQuery as pq
 
 
 class Scraper:
-    posts = []
     concurrency = 10
-    workers = 20
+    workers = 10
     headers = {
         'user-agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36'}
     proxy = None
     queue = asyncio.Queue()
+    result_queue = asyncio.Queue()
 
     def __init__(self, tags, concurrency=None, headers=None, proxy=None):
         self.start_urls = (('https://www.instagram.com/explore/tags/{}/'.format(i.name), i.name) for i in tags)
@@ -42,16 +41,15 @@ class Scraper:
 
         try:
             async with self.sem:
-                await asyncio.sleep(random.randint(1, 4))
-                async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=40)) as session:
+                async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=20)) as session:
                     logging.info('start request for: %s', url)
 
                     async with session.get(url, headers=self.headers, proxy=self.proxy) as resp:
                         if resp.status == 200:
                             return await resp.text()
 
-            logging.info("[%d status] retry fetch: %s, count: %d", resp.status, url, count_retry)
-            return await self.fetch(url, tag, count_retry=count_retry + 1)
+                        if resp.status != 429:
+                            return
 
         except ClientPayloadError:
             logging.info("[ClientPayloadError] retry fetch: %s, count: %d", url, count_retry)
@@ -64,6 +62,7 @@ class Scraper:
         except ServerDisconnectedError:
             logging.info("[ServerDisconnectedError] retry fetch: %s, count: %d", url, count_retry)
 
+        logging.info("[last] retry fetch: %s, count: %d", url, count_retry)
         return await self.fetch(url, tag, count_retry=count_retry + 1)
 
     def get_shared_data(self, scripts):
@@ -96,6 +95,9 @@ class Scraper:
             workers.append(self.worker())
 
         await asyncio.gather(*workers)
+
+        await asyncio.sleep(1)  # small delay before exit
+        self.result_queue.put_nowait(None)  # send stop signal
 
     async def worker(self):
         while True:
@@ -186,4 +188,4 @@ class Scraper:
         Info = namedtuple('Info', 'location, published_at, url, tag')
 
         i = Info(l, upload_time, post_url, tag)
-        self.posts.append(i)
+        self.result_queue.put_nowait(i)

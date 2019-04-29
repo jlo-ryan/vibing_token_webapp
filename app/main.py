@@ -19,14 +19,14 @@ async def get_app():
 async def main():
     db = create_db()
     tags = await db.execute(
-        Hashtag.select(),
+        Hashtag.select().limit(100)
     )
 
-    scraper = Scraper(tags, concurrency=100)  # , proxy="http://172.19.0.1:8080")
+    scraper = Scraper(tags, concurrency=200, proxy="http://arkady:arkady13like@209.97.183.97:8080")
     t1 = time.time()
-    await scraper.parse_all_tags()
+    asyncio.ensure_future(scraper.parse_all_tags())
 
-    await updater.update_statistics(db, scraper.posts)
+    await updater.update_statistics(db, scraper.result_queue)
 
     logging.info("TIME WORK %d", time.time() - t1)
 
@@ -37,7 +37,7 @@ async def main():
 
 if __name__ == '__main__':
     logging.basicConfig(format='%(asctime)s:%(levelname)s:%(message)s',
-                        level=logging.DEBUG)
+                        level=logging.INFO)
 
     loop = asyncio.get_event_loop()
 
