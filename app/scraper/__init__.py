@@ -61,6 +61,9 @@ class Scraper:
             logging.info("[TimeoutError] retry fetch: %s, count: %d", url, count_retry)
         except ServerDisconnectedError:
             logging.info("[ServerDisconnectedError] retry fetch: %s, count: %d", url, count_retry)
+        except Exception as e:
+            logging.info("[Unknown exception] %s", str(e))
+            return
 
         logging.info("[last] retry fetch: %s, count: %d", url, count_retry)
         return await self.fetch(url, tag, count_retry=count_retry + 1)

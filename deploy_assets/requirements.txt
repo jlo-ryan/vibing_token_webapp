@@ -6,3 +6,5 @@ aiohttp==3.5.4
 cython
 postgis
 pyquery==1.4.0
+aiohttp-swagger==1.0.5
+marshmallow==2.19.2
