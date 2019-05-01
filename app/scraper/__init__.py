@@ -144,7 +144,7 @@ class Scraper:
             logging.info("return from prepare_posts for url: %s, TagPage not found", url)
             return
 
-        for edge in shared_data['entry_data'][''][0]['graphql']['hashtag']['edge_hashtag_to_media']['edges']:
+        for edge in shared_data['entry_data']['TagPage'][0]['graphql']['hashtag']['edge_hashtag_to_media']['edges']:
             node = edge['node']
 
             tasks.append(self.get_posts(url.format(node['shortcode']), tag))
