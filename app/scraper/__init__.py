@@ -41,7 +41,9 @@ class Scraper:
 
         try:
             async with self.sem:
-                async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=30)) as session:
+                async with aiohttp.ClientSession(
+                        timeout=aiohttp.ClientTimeout(total=30),
+                        connector=aiohttp.TCPConnector(verify_ssl=False)) as session:
                     logging.info('start request for: %s', url)
 
                     async with session.get(url, headers=self.headers, proxy=self.proxy) as resp:
