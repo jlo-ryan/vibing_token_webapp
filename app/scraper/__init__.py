@@ -140,10 +140,11 @@ class Scraper:
 
         tasks = []
 
-        if "TagPage" not in shared_data['entry_data']:
+        if not shared_data['entry_data'].get('TagPage'):
+            logging.info("return from prepare_posts for url: %s, TagPage not found", url)
             return
 
-        for edge in shared_data['entry_data']['TagPage'][0]['graphql']['hashtag']['edge_hashtag_to_media']['edges']:
+        for edge in shared_data['entry_data'][''][0]['graphql']['hashtag']['edge_hashtag_to_media']['edges']:
             node = edge['node']
 
             tasks.append(self.get_posts(url.format(node['shortcode']), tag))
@@ -154,7 +155,7 @@ class Scraper:
         response = await self.fetch(url, tag)
 
         if response is None:
-            logging.info('get_posts response is None')
+            logging.info('get_posts response is None url: %s', url)
 
             return
 
@@ -164,7 +165,7 @@ class Scraper:
         scripts = self.get_scripts(await self.fetch(url, tag))
 
         if not scripts:
-            logging.info('get_posts not scripts')
+            logging.info('get_posts not scripts url: %s', url)
 
             return
 
@@ -185,18 +186,19 @@ class Scraper:
     async def get_point(self, url, upload_time, post_url, tag):
         scripts = self.get_scripts(await self.fetch(url, tag))
         if not scripts:
-            logging.info('get_point not scripts')
+            logging.info('get_point not scripts url: %s', url)
 
             return
 
         shared_data = self.get_shared_data(scripts)
 
         if not shared_data:
-            logging.info('get_point not shared_data')
+            logging.info('get_point not shared_data url: %s', url)
 
             return
 
-        if "LocationsPage" not in shared_data['entry_data']:
+        if not shared_data['entry_data'].get('LocationsPage'):
+            logging.info("return from get_point for url: %s, LocationsPage not found", url)
             return
 
         location = shared_data['entry_data']['LocationsPage'][0]['graphql']['location']
