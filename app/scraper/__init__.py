@@ -131,8 +131,7 @@ class Scraper:
             try:
                 await self.prepare_posts(shared_data, tag)
             except Exception as e:
-                logging.info("*********** shared_data: %s", shared_data)
-                logging.info("*********** URL: %s", url)
+                logging.info("prepare_posts exception URL: %s", url)
                 raise e
 
     async def prepare_posts(self, shared_data, tag):
@@ -159,29 +158,37 @@ class Scraper:
 
             return
 
-        if 'contentLocation' not in response:
+        if '"location":' not in response:
+            logging.info('get_posts location not in response url: %s', url)
+
             return
 
-        scripts = self.get_scripts(await self.fetch(url, tag))
+        scripts = self.get_scripts(response)
 
         if not scripts:
             logging.info('get_posts not scripts url: %s', url)
 
             return
 
-        data = {}
+        shared_data = self.get_shared_data(scripts)
 
-        for script in scripts:
-            if script.text is not None and 'contentLocation' in script.text:
-                data = json.loads(script.text)
-                break
+        if not shared_data:
+            logging.info('get_posts not shared_data url: %s', url)
+            return
 
-        if data:
-            await self.get_point(
-                data['contentLocation']['mainEntityofPage']['@id'],
-                datetime.strptime(data['uploadDate'], '%Y-%m-%dT%H:%M:%S'),
-                data['mainEntityofPage']['@id'], tag
-            )
+        shortcode_media = shared_data['entry_data']['PostPage'][0]['graphql']['shortcode_media']
+        if not shortcode_media['location']:
+            logging.info('get_posts not location url: %s', url)
+            return
+
+        location_url = 'https://www.instagram.com/explore/locations/{}/'.format(
+            shortcode_media['location']['id'])
+
+        await self.get_point(
+            location_url,
+            datetime.fromtimestamp(shortcode_media['taken_at_timestamp']),
+            url, tag
+        )
 
     async def get_point(self, url, upload_time, post_url, tag):
         scripts = self.get_scripts(await self.fetch(url, tag))
