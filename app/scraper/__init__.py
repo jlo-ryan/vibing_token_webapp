@@ -122,7 +122,7 @@ class Scraper:
         scripts = self.get_scripts(await self.fetch(url, tag))
 
         if not scripts:
-            logging.info('process_item not scripts')
+            logging.info('process_item not scripts for url: %s', url)
             return
 
         shared_data = self.get_shared_data(scripts)
@@ -139,6 +139,9 @@ class Scraper:
         url = 'https://www.instagram.com/p/{}/'
 
         tasks = []
+
+        if "TagPage" not in shared_data['entry_data']:
+            return
 
         for edge in shared_data['entry_data']['TagPage'][0]['graphql']['hashtag']['edge_hashtag_to_media']['edges']:
             node = edge['node']
@@ -191,6 +194,9 @@ class Scraper:
         if not shared_data:
             logging.info('get_point not shared_data')
 
+            return
+
+        if "LocationsPage" not in shared_data['entry_data']:
             return
 
         location = shared_data['entry_data']['LocationsPage'][0]['graphql']['location']
