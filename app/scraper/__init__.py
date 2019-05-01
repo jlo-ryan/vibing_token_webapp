@@ -12,7 +12,7 @@ from pyquery import PyQuery as pq
 
 class Scraper:
     concurrency = 10
-    workers = 10
+    workers = 5
     headers = {
         'user-agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36'}
     proxy = None
@@ -41,7 +41,7 @@ class Scraper:
 
         try:
             async with self.sem:
-                async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=20)) as session:
+                async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=30)) as session:
                     logging.info('start request for: %s', url)
 
                     async with session.get(url, headers=self.headers, proxy=self.proxy) as resp:
@@ -112,6 +112,8 @@ class Scraper:
             try:
                 await self.process_item(*item)
             finally:
+                self.queue.put_nowait(item)
+
                 self.queue.task_done()
 
     async def process_item(self, url, tag):
