@@ -34,7 +34,7 @@ def create_db():
     return peewee_async.Manager(database)
 
 
-async def close_db():
+async def close_db(app):
     await database.close()
 
 

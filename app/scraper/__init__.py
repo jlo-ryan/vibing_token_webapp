@@ -128,7 +128,12 @@ class Scraper:
         shared_data = self.get_shared_data(scripts)
 
         if shared_data:
-            await self.prepare_posts(shared_data, tag)
+            try:
+                await self.prepare_posts(shared_data, tag)
+            except Exception as e:
+                logging.info("*********** shared_data: %s", shared_data)
+                logging.info("*********** URL: %s", url)
+                raise e
 
     async def prepare_posts(self, shared_data, tag):
         url = 'https://www.instagram.com/p/{}/'
