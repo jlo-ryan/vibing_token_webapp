@@ -16,6 +16,8 @@ services:
 
   vibing:
     image: 'vibing'
+    depends_on:
+      - db
     build: .
 
   realtime:
@@ -34,6 +36,8 @@ services:
     image: 'vibing'
     restart: always
     command: '/vibing/rotating_proxy'
+    depends_on:
+      - db
     environment:
       - host=db
       - port=5432
@@ -45,6 +49,8 @@ services:
     image: 'vibing'
     restart: always
     command: '/vibing/miner -mode=miner'
+    depends_on:
+      - db
     environment:
       - host=db
       - port=5432
@@ -56,6 +62,8 @@ services:
     image: 'vibing'
     restart: always
     command: '/vibing/miner -mode=assessor'
+    depends_on:
+      - db
     environment:
       - host=db
       - port=5432
