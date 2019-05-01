@@ -9,7 +9,7 @@ from serializers.main import HashtagSerializer, PostSerializer
 class TopDistanceView(web.View):
     """
     ---
-    description: Top distance method. EXAMPLE URL: http://VEBSITE/top_distance/10
+    description: Top distance method.
     tags:
     - api
     produces:
@@ -47,7 +47,7 @@ class TopDistanceView(web.View):
 class TopHopsView(web.View):
     """
     ---
-    description: Top hops method.  EXAMPLE URL: http://VEBSITE/top_hops/10
+    description: Top hops method.
     tags:
     - api
     produces:
@@ -85,7 +85,7 @@ class TopHopsView(web.View):
 class PostsView(web.View):
     """
     ---
-    description: Get posts by hashtag method.   EXAMPLE URL: http://VEBSITE/test
+    description: Get posts by hashtag method.
     tags:
     - api
     produces:

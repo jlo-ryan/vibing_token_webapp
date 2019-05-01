@@ -3,8 +3,8 @@ services:
 
   db:
     image: mdillon/postgis:11
-    ports:
-      - "5433:5432"
+    #    ports:
+    #      - "5433:5432"
     volumes:
       - database:/var/lib/postgresql/data/pgdata
     environment:
@@ -17,21 +17,52 @@ services:
   vibing:
     image: 'vibing'
     build: .
-    volumes:
-      - data-volume:/vibing
 
   realtime:
     image: 'vibing'
     command: 'python3 /vibing/app/main.py'
-    volumes:
-      - data-volume:/vibing
+    environment:
+      CONCURRENCY: 50
+      PROXY: http://arkady:arkady13like@rotating_proxy:8080
     depends_on:
       - db
     ports:
       - "8000:8000"
     restart: always
 
+  rotating_proxy:
+    image: 'vibing'
+    restart: always
+    command: '/vibing/rotating_proxy'
+    environment:
+      - host=db
+      - port=5432
+      - user=vibing
+      - dbname=vibing
+      - password=ghbdtn
+
+  miner:
+    image: 'vibing'
+    restart: always
+    command: '/vibing/miner -mode=miner'
+    environment:
+      - host=db
+      - port=5432
+      - user=vibing
+      - dbname=vibing
+      - password=ghbdtn
+
+  assessor:
+    image: 'vibing'
+    restart: always
+    command: '/vibing/miner -mode=assessor'
+    environment:
+      - host=db
+      - port=5432
+      - user=vibing
+      - dbname=vibing
+      - password=ghbdtn
+
 
 volumes:
-  data-volume:
   database:

@@ -1,7 +1,6 @@
 import asyncio
 import logging
 import os
-import time
 
 from aiohttp import web
 from aiohttp_swagger import setup_swagger
@@ -14,21 +13,20 @@ from views import main
 
 
 async def start_scraper():
-    while True:
-        tags = await db.execute(
-            Hashtag.select()
-        )
-        scraper = Scraper(
-            tags,
-            concurrency=os.getenv("concurrency", 200),
-            proxy=os.getenv("proxy")
-        )
-        t1 = time.time()
+    tags = await db.execute(
+        Hashtag.select()
+    )
+    logging.info("[ENV] CONCURRENCY: %s, PROXY: %s",
+                 os.getenv("CONCURRENCY"), os.getenv("PROXY"))
 
-        asyncio.ensure_future(scraper.parse_all_tags())
-        await updater.update_statistics(db, scraper.result_queue)
+    scraper = Scraper(
+        tags,
+        concurrency=int(os.getenv("CONCURRENCY", 50)),
+        proxy=os.getenv("PROXY")
+    )
 
-        logging.info("SCRAPER DONE AT TIME WORK %d", time.time() - t1)
+    asyncio.ensure_future(scraper.parse_all_tags())
+    await updater.update_statistics(db, scraper.result_queue)
 
 
 ROUTES = (
